@@ -1,0 +1,18 @@
+For the formula for cal_gForce it is:
+F = G * (m1 * m2) / r^2
+
+Where:
+- F is the gravitational force between the two objects,
+- G is the gravitational constant (6.674 x 10^-11 m^3 kg^-1 s^-2),
+- m1 and m2 are the masses of the two objects, and
+- r is the distance between the centers of the two objects.
+
+Once you have the gravitational force, you can use Newton's second law of motion, F = m * a, to find the acceleration (a) of the object. Rearranging this equation gives:
+
+a = F / m
+
+Where:
+- a is the acceleration of the object, and
+- m is the mass of the object.
+
+So, to calculate the acceleration of an object in a two-body system, you would first use Newton's law of universal gravitation to find the gravitational force between the two objects, and then divide that force by the mass of the object to find its acceleration.

@@ -11,12 +11,13 @@ class PointMass:
         self.xpos = xpos
         self.ypos = ypos
         self.zpos = zpos
-        self.mass = mass
-        self.radius = radius
+        self.mass = mass #in Kilograms
+        self.radius = radius #in meters
         self.colour = colour
-        self.velocity = velocity
-        self.acceleration = acceleration
-    def cal_gForce(self,mass1, mass2, distance):
-        return  Constants.gravitational_constant * (mass1 * mass2) / distance^2
+        self.velocity = velocity #in m/s
+        self.acceleration = acceleration 
+    #see textfile for more information
+    def cal_gForce(self,mass, distance):
+        return  Constants.gravitational_constant * (self.mass * mass) / distance^2
     
         
