@@ -9,10 +9,15 @@ Where:
 
 Once you have the gravitational force, you can use Newton's second law of motion, F = m * a, to find the acceleration (a) of the object. Rearranging this equation gives:
 
-a = F / m
+a = (G * M) / r2
 
 Where:
 - a is the acceleration of the object, and
-- m is the mass of the object.
+- M is the mass of the object.
+- r is the distance of the center of the objects
 
 So, to calculate the acceleration of an object in a two-body system, you would first use Newton's law of universal gravitation to find the gravitational force between the two objects, and then divide that force by the mass of the object to find its acceleration.
+
+In a 2 dimensional plane, the distance between points (x1, y1) and (x2, y2) is given by the Pythagorean theorem:
+
+d=SQRT ((x1 - x2)^2 + (y1 - y2)^2)

@@ -20,5 +20,14 @@ class PointMass:
     #see textfile for more information
     def cal_gForce(self,mass, distance):
         return Constants.gravitational_constant * (self.mass * mass) / distance**2
-    
+    #returns the distance between two point obejcts, adding the base distance from the centre of the first object
+    def distance_to(self, other):
+        dx = self.xpos - other.xpos
+        dy = self.ypos - other.ypos
+        dz = self.zpos - other.zpos
         
+        distance = math.sqrt(dx**2 + dy**2 + dz**2)
+        
+        return (distance * 1000) + self.radius #always need to include the distance from the centre of mass
+    
+        #Each Pixel is 1KM so the result in the test data says 360 so i need to times that by 1000 

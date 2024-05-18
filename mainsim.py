@@ -6,13 +6,13 @@ from objects import Constants, PointMass
 pygame.init()
 
 # Set up the window
-window_size = (800, 600)
+window_size = (1200, 800)
 window = pygame.display.set_mode(window_size)
 pygame.display.set_caption("Pygame Window")
 
 planet = PointMass(
-    xpos=200,
-    ypos=300,
+    xpos=600,
+    ypos=400,
     zpos=0,
     mass=5.9722e24,
     radius=6.371e6,
@@ -22,11 +22,11 @@ planet = PointMass(
 )
 
 satellite = PointMass(
-    xpos=600,
-    ypos=300,
+    xpos=300,
+    ypos=600,
     zpos=0,
-    mass=1000,
-    radius=10,
+    mass=100,
+    radius=1,
     velocity=[0,0,0],
     acceleration=[0,0,0],
     colour=[255,0,255]
@@ -34,20 +34,23 @@ satellite = PointMass(
 
 #drawn objects
 
-circle_radius = 50
+circle_radius = 10
 c1_pos = (planet.xpos,planet.ypos)
 c2_pos = (satellite.xpos, satellite.ypos)
 
 #distance is from the CENTRE of the masses, so for earth it's 6371km from the centre to the surface
 # you need to add the distance from the sruface to the orbit of the satellite ONTOP of this value
-planet.gForce = planet.cal_gForce(satellite.mass, 6371)
+planet.gForce = planet.cal_gForce(satellite.mass, 6.371e6)
 satellite.gForce = satellite.cal_gForce(planet.mass, 25000e4)
 print("planet.gForce = %f" % planet.gForce)
 print("satellite.gforce = %f" % satellite.gForce)
 G = Constants.gravitational_constant * (planet.mass / planet.radius**2)
-A = planet.gForce / planet.mass
+dVector = planet.distance_to(satellite)
+A = (Constants.gravitational_constant * planet.mass) / dVector**2
 print("gravity = %f" % G)
 print("Acc = %f" % A) # This is coming in at a very low amount, the math is right so maybe the formula isn't
+
+print("dVector = %f" % dVector)
 clock = pygame.time.Clock()
 fps = 60
 
@@ -64,9 +67,9 @@ while running:
     # Update
 
     # Draw
-    window.fill(255,255,255)
-    pygame.draw.circle(window, 255,0,0, c1_pos, circle_radius)
-    pygame.draw.circle(window, 0,255,0, c2_pos, circle_radius)
+    window.fill((0,0,0))
+    pygame.draw.circle(window, (125,100,100), c1_pos, circle_radius)
+    pygame.draw.circle(window, (255,255,255), c2_pos, circle_radius)
     
     # Refresh display
     pygame.display.flip()
