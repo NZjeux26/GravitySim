@@ -1,0 +1,2 @@
+I'm getting confused between the motion formula in the book and deriving the motion from using gravity alone. 
+I know the book/GPT way is right since it's in the book but I want to do my way because Ego and stubbon.

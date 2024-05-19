@@ -11,46 +11,43 @@ window = pygame.display.set_mode(window_size)
 pygame.display.set_caption("Pygame Window")
 
 planet = PointMass(
-    xpos=600,
-    ypos=400,
-    zpos=0,
+    position=[600,400,0],
     mass=5.9722e24,
     radius=6.371e6,
-    velocity=[0,0,0],
-    acceleration=[0,0,0],
-    colour=[255,0,12]
+    velocity=[0,0,0], #in m/s
+    acceleration=[0,0,0], #in m/s^2
+    colour=[125,100,100]
 )
 
 satellite = PointMass(
-    xpos=300,
-    ypos=600,
-    zpos=0,
+    position=[300,600,0],
     mass=100,
     radius=1,
-    velocity=[0,0,0],
+    velocity=[0,3000,0], #need an intial velocity or else it'll jsut fall to the central mass
     acceleration=[0,0,0],
-    colour=[255,0,255]
+    colour=[255,255,255]
 )
 
 #drawn objects
-
+#actual drawing of obejcts on screen
 circle_radius = 10
-c1_pos = (planet.xpos,planet.ypos)
-c2_pos = (satellite.xpos, satellite.ypos)
+c1_pos = (planet.position[0],planet.position[1])
+c2_pos = (satellite.position[0], satellite.position[1])
 
 #distance is from the CENTRE of the masses, so for earth it's 6371km from the centre to the surface
 # you need to add the distance from the sruface to the orbit of the satellite ONTOP of this value
-planet.gForce = planet.cal_gForce(satellite.mass, 6.371e6)
-satellite.gForce = satellite.cal_gForce(planet.mass, 25000e4)
-print("planet.gForce = %f" % planet.gForce)
-print("satellite.gforce = %f" % satellite.gForce)
-G = Constants.gravitational_constant * (planet.mass / planet.radius**2)
-dVector = planet.distance_to(satellite)
-A = (Constants.gravitational_constant * planet.mass) / dVector**2
-print("gravity = %f" % G)
-print("Acc = %f" % A) # This is coming in at a very low amount, the math is right so maybe the formula isn't
+# planet.gForce = planet.cal_gForce(satellite.mass, 6.371e6)
 
-print("dVector = %f" % dVector)
+# print("planet.gForce = %f" % planet.gForce)
+
+# G = Constants.gravitational_constant * (planet.mass / planet.radius**2)
+# dVector = planet.distance_to(satellite)
+
+# A = (-Constants.gravitational_constant * planet.mass) / dVector**2
+# print("gravity = %f" % G)
+# print("Acc = %f" % A) # This is coming in at a very low amount, the math is right so maybe the formula isn't
+
+# print("dVector = %f" % dVector)
 clock = pygame.time.Clock()
 fps = 60
 
@@ -65,11 +62,15 @@ while running:
     dt = clock.tick(fps) / 1000.0
     
     # Update
-
+    satellite.acceleration = satellite.acceleration_due_to_gravity(planet)
+    
+    satellite.velocity += (satellite.acceleration * dt)
+    satellite.position += satellite.velocity
+    
     # Draw
     window.fill((0,0,0))
-    pygame.draw.circle(window, (125,100,100), c1_pos, circle_radius)
-    pygame.draw.circle(window, (255,255,255), c2_pos, circle_radius)
+    pygame.draw.circle(window, planet.colour, c1_pos, 25)
+    pygame.draw.circle(window, satellite.colour, c2_pos, circle_radius)
     
     # Refresh display
     pygame.display.flip()
