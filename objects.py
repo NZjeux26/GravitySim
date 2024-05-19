@@ -19,11 +19,14 @@ class PointMass:
     def cal_gForce(self,other_mass, distance):
         return Constants.gravitational_constant * (self.mass * other_mass) / distance**2
     #returns the distance between two point obejcts, adding the base distance from the centre of the first object
+    #the below is matching the known numbers from doing it manually so safe to say this function is fine...
     def distance_to(self, other):
         dVector = self.position - other.position
         distance = np.linalg.norm(dVector)
         #Each Pixel is 1KM so the result in the test data says 360 so i need to times that by 1000 
         return (distance * 1000) + self.radius
+    
+    #something is going very wrong in here
     def acceleration_due_to_gravity(self,other):
         dVector = self.position - other.position
         distance = np.linalg.norm(dVector)
