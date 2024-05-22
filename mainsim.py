@@ -9,6 +9,8 @@ pygame.init()
 window_size = (1200, 800)
 window = pygame.display.set_mode(window_size)
 pygame.display.set_caption("Pygame Window")
+# Create a font object
+font = pygame.font.SysFont(None, 24)
 
 planet = PointMass(
     position=[600.0,400.0,0.0],
@@ -28,12 +30,25 @@ satellite = PointMass(
     colour=[255,255,255]
 )
 
+def draw_info(surface, font, satellite):
+    velocity_text = f"Velocity: {satellite.velocity}"
+    acceleration_text = f"Acceleration: {satellite.acceleration}"
+    position_text = f"Position: {satellite.position}"
+    
+    velocity_surface = font.render(velocity_text, True, (255, 255, 255))
+    acceleration_surface = font.render(acceleration_text, True, (255, 255, 255))
+    position_surface = font.render(position_text, True, (255, 255, 255))
+    
+    surface.blit(velocity_surface, (20, 20))
+    surface.blit(acceleration_surface, (20, 50))
+    surface.blit(position_surface, (20, 80))
+
 #drawn objects
 #actual drawing of obejcts on screen
 circle_radius = 10
 c1_pos = (planet.position[0],planet.position[1])
 c2_pos = (satellite.position[0], satellite.position[1])
-
+    
 clock = pygame.time.Clock()
 fps = 60
 
@@ -65,6 +80,9 @@ while running:
     pygame.draw.circle(window, planet.colour, c1_pos, 25)
     pygame.draw.circle(window, satellite.colour, c2_pos, circle_radius)
     
+    #Draw information
+    draw_info(window, font, satellite)
+
     # Refresh display
     pygame.display.flip()
     #Cap the frame rate to 60 FPS
@@ -73,3 +91,4 @@ while running:
 # Quit Pygame
 pygame.quit()
 sys.exit()
+#updating the position and speed every frame and thus doing 60 updates in one second
