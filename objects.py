@@ -24,7 +24,8 @@ class PointMass:
         dVector = self.position - other.position
         distance = np.linalg.norm(dVector)
         #Each Pixel is 1KM so the result in the test data says 360 so i need to times that by 1000 
-        return (distance * 1000) + self.radius
+        return distance
+        #return (distance * 1000) + self.radius
     
     #something is going very wrong in here
     def acceleration_due_to_gravity(self,other):

@@ -25,7 +25,7 @@ satellite = PointMass(
     position=[300.0,600.0,0.0],
     mass=100,
     radius=1,
-    velocity=[4500.0,7700.0,0.0], #need an intial velocity or else it'll jsut fall to the central mass
+    velocity=[4500.0,2500.0,0.0], #need an intial velocity or else it'll jsut fall to the central mass
     acceleration=[0.0,0.0,0.0],
     colour=[255,255,255]
 )
@@ -34,14 +34,17 @@ def draw_info(surface, font, satellite):
     velocity_text = f"Velocity: {satellite.velocity}"
     acceleration_text = f"Acceleration: {satellite.acceleration}"
     position_text = f"Position: {satellite.position}"
+    alt_text = f"Altitude: {satalt}"
     
     velocity_surface = font.render(velocity_text, True, (255, 255, 255))
     acceleration_surface = font.render(acceleration_text, True, (255, 255, 255))
     position_surface = font.render(position_text, True, (255, 255, 255))
+    alt_sat = font.render(alt_text, True, (255, 255, 255))
     
     surface.blit(velocity_surface, (20, 20))
     surface.blit(acceleration_surface, (20, 50))
     surface.blit(position_surface, (20, 80))
+    surface.blit(alt_sat, (20, 110))
 
 #drawn objects
 #actual drawing of obejcts on screen
@@ -70,7 +73,7 @@ while running:
     
     #add the velocity change to the position
     satellite.position += (satellite.velocity / 1000)#convert into kilometers
-    
+    satalt = satellite.distance_to(planet)
     #update the position of the drawn obejct on screen
     c1_pos = (planet.position[0],planet.position[1]) #redundant but maybe for later
     c2_pos = (satellite.position[0], satellite.position[1])
