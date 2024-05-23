@@ -25,16 +25,25 @@ class PointMass:
         distance = np.linalg.norm(dVector)
         #Each Pixel is 1KM so the result in the test data says 360 so i need to times that by 1000 
         return distance
-        #return (distance * 1000) + self.radius
     
-    #something is going very wrong in here
     def acceleration_due_to_gravity(self,other):
         dVector = self.position - other.position # distance vector from self to the other point mass in pixels(km)
         distance_km = np.linalg.norm(dVector)  #Compute the Euclidean distance in km
 
         distance_m = distance_km * 1000 + other.radius #the distance including the radius to the centre in meters
         unit_vector = (dVector / distance_km) #the unit vector for the direction of the force
-        acceleration_magnitude = -Constants.gravitational_constant * other.mass / distance_m**2#magnitude of the acceleration due to gravity in meters
+        
+        acceleration_magnitude = -Constants.gravitational_constant * other.mass / distance_m**2  #magnitude of the acceleration due to gravity in meters
         return acceleration_magnitude * (unit_vector * 1000) #Return the acceleration vector by multiplying the magnitude with the unit vector(converted to meters)
         #the returned acceleration vector is in m/s
         #I could just leave it unchanged and get the output in km/s instead and do the math conversion on the other side?
+        
+    def get_theta_angle(self, other):
+        dot_product = np.dot(self.position,other.position) #dot product of the two vectors
+        mag1 = np.linalg.norm(self.position)  #norms of the vectors
+        mag2 = np.linalg.norm(other.position)
+        
+        cos_theta = dot_product / (mag1 * mag2)
+        theta_radians = np.arccos(cos_theta)
+        theta_degrees = np.degrees(theta_radians)
+        return theta_degrees

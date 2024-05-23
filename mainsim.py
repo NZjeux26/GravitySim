@@ -1,6 +1,7 @@
 import pygame
 import sys
 import time
+import numpy as np
 from objects import Constants, PointMass
 # Initialize Pygame
 pygame.init()
@@ -26,7 +27,7 @@ satellite = PointMass(
     mass=100,
     radius=1,
     velocity=[4500.0,2500.0,0.0], #need an intial velocity or else it'll jsut fall to the central mass
-    acceleration=[0.0,0.0,0.0],
+    acceleration=[0.0,100.0,0.0],
     colour=[255,255,255]
 )
 
@@ -35,17 +36,23 @@ def draw_info(surface, font, satellite):
     acceleration_text = f"Acceleration: {satellite.acceleration}"
     position_text = f"Position: {satellite.position}"
     alt_text = f"Altitude: {satalt}"
-    
+    theta_text = f"Theta: {theta}"
+    velocityMag_text = f"Velocity_Mag: {satellite_velocity}"
+     
     velocity_surface = font.render(velocity_text, True, (255, 255, 255))
     acceleration_surface = font.render(acceleration_text, True, (255, 255, 255))
     position_surface = font.render(position_text, True, (255, 255, 255))
     alt_sat = font.render(alt_text, True, (255, 255, 255))
+    theta_sat = font.render(theta_text, True, (255, 255, 255))
+    velocity_sat = font.render(velocityMag_text, True, (255, 255, 255))
     
     surface.blit(velocity_surface, (20, 20))
     surface.blit(acceleration_surface, (20, 50))
     surface.blit(position_surface, (20, 80))
     surface.blit(alt_sat, (20, 110))
-
+    surface.blit(theta_sat, (20, 140))
+    surface.blit(velocity_sat, (20, 170))
+    
 #drawn objects
 #actual drawing of obejcts on screen
 circle_radius = 10
@@ -72,13 +79,17 @@ while running:
     satellite.velocity += satellite.acceleration * dt
     
     #add the velocity change to the position
-    satellite.position += (satellite.velocity / 1000)#convert into kilometers
+    satellite.position += (satellite.velocity / 1000)# * dt #convert into kilometers
+    
     satalt = satellite.distance_to(planet)
+    theta = satellite.get_theta_angle(planet)
+    satellite_velocity = np.linalg.norm(satellite.velocity)
+    
     #update the position of the drawn obejct on screen
     c1_pos = (planet.position[0],planet.position[1]) #redundant but maybe for later
     c2_pos = (satellite.position[0], satellite.position[1])
     
-    # Draw
+    #Draw
     window.fill((0,0,0))
     pygame.draw.circle(window, planet.colour, c1_pos, 25)
     pygame.draw.circle(window, satellite.colour, c2_pos, circle_radius)
@@ -86,7 +97,7 @@ while running:
     #Draw information
     draw_info(window, font, satellite)
 
-    # Refresh display
+    #Refresh display
     pygame.display.flip()
     #Cap the frame rate to 60 FPS
     clock.tick(fps)
