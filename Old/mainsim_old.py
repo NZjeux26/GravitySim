@@ -12,7 +12,7 @@ window = pygame.display.set_mode(window_size)
 pygame.display.set_caption("Two Body Simulation")
 # Create a font object
 font = pygame.font.SysFont(None, 24)
-                        # x, y ,z
+
 planet = PointMass(
     position=[600.0,400.0,0.0],
     mass=5.9722e24,
@@ -23,11 +23,11 @@ planet = PointMass(
 )
 
 satellite = PointMass(
-    position=[280.0,400.0,0.0],
+    position=[300.0,400.0,0.0],
     mass=100,
     radius=1,
-    velocity=[0.0,7723.0,0.0], #need an intial velocity or else it'll jsut fall to the central mass
-    acceleration=[0.0,0.0,0.0],
+    velocity=[0.0,7700.0,0.0], #need an intial velocity or else it'll jsut fall to the central mass
+    acceleration=[100.0,0.0,0.0],
     colour=[255,255,255]
 )
 
@@ -52,24 +52,20 @@ def draw_info(surface, font, satellite):
     surface.blit(alt_sat, (20, 110))
     surface.blit(theta_sat, (20, 140))
     surface.blit(velocity_sat, (20, 170))
-grid_spacing = 50
-# Function to draw the grid
-def draw_grid():
-    for x in range(0, window_size[0], grid_spacing):
-        pygame.draw.line(window, [255,255,255], (x, 0), (x, window_size[1]))
-    for y in range(0, window_size[1], grid_spacing):
-        pygame.draw.line(window, [255,255,255], (0, y), (window_size[0], y))
-#drawn objects
+    
 
+#drawn objects
 #actual drawing of obejcts on screen
 circle_radius = 10
 c1_pos = (planet.position[0],planet.position[1])
-c2_pos = (int(satellite.position[0]), int(satellite.position[1]))
-   
+c2_pos = (satellite.position[0], satellite.position[1])
+    
 clock = pygame.time.Clock()
 fps = 60
-prev_pos = satellite.position
-old_pos =(int(prev_pos[0]),int(prev_pos[1])) 
+
+# Initialize the previous position for Verlet integration
+previous_position = np.array(satellite.position) - np.array(satellite.velocity) * (1 / fps)
+
 # Main loop
 running = True
 while running:
@@ -77,41 +73,37 @@ while running:
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             running = False
-    
+            
     dt = clock.tick(fps) / 1000.0
-  
-    #attempt with leap frog intergration. Still unstable, it's not 
-    #Update
-    satellite.velocity += 0.5 * satellite.acceleration * dt
     
-    #change to the position
-    satellite.position += (satellite.velocity / 1000) #convert into kilometers
-    prev_pos = satellite.position
-    #calculate acceleration
-    satellite.acceleration = satellite.old_acceleration_due_to_gravity(planet)
-    
-    #Update Velocity
-    satellite.velocity += 0.5 * satellite.acceleration * dt
+     # Update
+    # Calculate acceleration due to gravity
+    satellite.acceleration = satellite.acceleration_due_to_gravity(planet)
+
+    # Update position using Verlet integration
+    new_position = 2 * np.array(satellite.position) - previous_position + np.array(satellite.acceleration) * (dt ** 2)
+    previous_position = np.array(satellite.position)
+    satellite.position = new_position.tolist()
+
+    # Calculate the new velocity
+    satellite.velocity = (np.array(satellite.position) - previous_position) / (2 * dt)
     
     satalt = satellite.distance_to(planet)
     theta = satellite.get_theta_angle(planet)
-    satellite_velocity = satellite.get_velocity(planet) 
+    satellite_velocity = np.linalg.norm(satellite.velocity)
     
-    # #update the position of the drawn obejct on screen
+    #update the position of the drawn obejct on screen
     c1_pos = (planet.position[0],planet.position[1]) #redundant but maybe for later
-    c2_pos = (int(satellite.position[0]), int(satellite.position[1]))
-    old_pos =(int(prev_pos[0]),int(prev_pos[1])) 
+    c2_pos = (satellite.position[0], satellite.position[1])
     
     #Draw
     window.fill((0,0,0))
     pygame.draw.circle(window, planet.colour, c1_pos, 25)
-    pygame.draw.circle(window, satellite.colour, c2_pos, 1)
-    pygame.draw.line(window, (255, 255, 255), old_pos,c2_pos, 10) #probably too short and udner the circle
-
+    pygame.draw.circle(window, satellite.colour, c2_pos, circle_radius)
+    
     #Draw information
     draw_info(window, font, satellite)
-    #draw_grid()
-    
+
     #Refresh display
     pygame.display.flip()
     #Cap the frame rate to 60 FPS
