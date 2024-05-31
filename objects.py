@@ -46,24 +46,23 @@ class PointMass:
     #see textfile for more information
     def cal_gForce(self,other_mass, distance):
         return Constants.gravitational_constant * (self.mass * other_mass) / distance**2
-    #returns the distance between two point obejcts, adding the base distance from the centre of the first object
-    #the below is matching the known numbers from doing it manually so safe to say this function is fine...
+ 
     def distance_to(self, other):
         dVector = self.position - other.position
         distance = np.linalg.norm(dVector)
         #Each Pixel is 1KM so the result in the test data says 360 so i need to times that by 1000 
         return distance
-    def old_acceleration_due_to_gravity(self,other):
+    def acceleration_due_to_gravity(self,other):
         dVector = self.position - other.position # distance vector from self to the other point mass in pixels(km)
         distance_km = np.linalg.norm(dVector)  #Compute the Euclidean distance in km
 
         distance_m = distance_km * 1000 + other.radius #the distance including the radius to the centre in meters
         unit_vector = (dVector / distance_km) #the unit vector for the direction of the force
         
-        acceleration_magnitude = -Constants.gravitational_constant * other.mass / distance_m**2  #magnitude of the acceleration due to gravity in meters
+        acceleration_magnitude = -Constants.gravitational_constant * other.mass / distance_m**2  #magnitude of the acceleration due to gravity in meters ** This is actually the G force
         return acceleration_magnitude * (unit_vector * 1000) #Return the acceleration vector by multiplying the magnitude with the unit vector(converted to meters)
         #the returned acceleration vector is in m/s
-        #I could just leave it unchanged and get the output in km/s instead and do the math conversion on the other side?    
+   
     def get_theta_angle(self, other):
         dot_product = np.dot(self.position,other.position) #dot product of the two vectors
         mag1 = np.linalg.norm(self.position)  #norms of the vectors
@@ -77,14 +76,3 @@ class PointMass:
         r = other.radius + self.distance_to(other) * 1000 # centre of earth to surface + alt which are in KM then converted into meters
         v = math.sqrt(Constants.mu_earth / r)
         return v
-    def acceleration_due_to_gravity(self,other):
-        relative_position = self.position - other.position  #this is in km
-        
-        r = other.radius + self.distance_to(other) * 1000#the self.distance comes back in km which needs conevrted to m to work with the radius
-        
-        acceleration_mag = Constants.mu_earth / (r**2)
-        acceleration_direction = -relative_position / (r / 1000)
-        acceleration_vector = acceleration_mag * (acceleration_direction * 1000)
-        return acceleration_vector
-        #Ok this is just the first one i made with better naming, but for some reason the satelitte is jsut fucking off in a stright line. 
- 

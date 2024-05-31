@@ -1,2 +1,7 @@
-I'm getting confused between the motion formula in the book and deriving the motion from using gravity alone. 
-I know the book/GPT way is right since it's in the book but I want to do my way because Ego and stubbon.
+S: I'm getting confused between the motion formula in the book and deriving the motion from using gravity alone. 
+        A: Because the formula in the book is a 2nd order derivitive 
+How to work out correct starting point
+How to work out the starting values automatically without manual calculation
+How to Replace the Leap-Frog intergration with a third or forth order intergration
+How to control the orbiting object 
+How to slow the simulation to be 1:1 to real time.

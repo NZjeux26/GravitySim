@@ -68,8 +68,8 @@ c2_pos = (int(satellite.position[0]), int(satellite.position[1]))
    
 clock = pygame.time.Clock()
 fps = 60
-prev_pos = satellite.position
-old_pos =(int(prev_pos[0]),int(prev_pos[1])) 
+positions = []
+
 # Main loop
 running = True
 while running:
@@ -80,37 +80,43 @@ while running:
     
     dt = clock.tick(fps) / 1000.0
   
-    #attempt with leap frog intergration. Still unstable, it's not 
+    #attempt with leap frog intergration. Still unstable, it's not terrible but the varenice is still high.
     #Update
     satellite.velocity += 0.5 * satellite.acceleration * dt
     
     #change to the position
     satellite.position += (satellite.velocity / 1000) #convert into kilometers
-    prev_pos = satellite.position
+    
     #calculate acceleration
-    satellite.acceleration = satellite.old_acceleration_due_to_gravity(planet)
+    satellite.acceleration = satellite.acceleration_due_to_gravity(planet)
     
     #Update Velocity
     satellite.velocity += 0.5 * satellite.acceleration * dt
     
+    #Add old position to array for drawing
+    positions.append((int(satellite.position[0]), satellite.position[1]))
+    
+    #update onscreen numbers
     satalt = satellite.distance_to(planet)
     theta = satellite.get_theta_angle(planet)
     satellite_velocity = satellite.get_velocity(planet) 
     
-    # #update the position of the drawn obejct on screen
+    #update the position of the drawn obejct on screen
     c1_pos = (planet.position[0],planet.position[1]) #redundant but maybe for later
     c2_pos = (int(satellite.position[0]), int(satellite.position[1]))
-    old_pos =(int(prev_pos[0]),int(prev_pos[1])) 
-    
+   
     #Draw
     window.fill((0,0,0))
     pygame.draw.circle(window, planet.colour, c1_pos, 25)
-    pygame.draw.circle(window, satellite.colour, c2_pos, 1)
-    pygame.draw.line(window, (255, 255, 255), old_pos,c2_pos, 10) #probably too short and udner the circle
+    pygame.draw.circle(window, satellite.colour, c2_pos, 5)
+    #Draw orbit trace on screen
+    if len(positions) > 1:
+        for i in range(len(positions) - 1):
+            pygame.draw.line(window,(205,205,205),positions[i], positions[i + 1], 1)
 
     #Draw information
     draw_info(window, font, satellite)
-    #draw_grid()
+    draw_grid()
     
     #Refresh display
     pygame.display.flip()
@@ -121,3 +127,7 @@ while running:
 pygame.quit()
 sys.exit()
 #updating the position and speed every frame and thus doing 60 updates in one second
+
+#Notes
+#Need to have a plan, what's the aim atm. 
+#I want to draw the orbital path so I can see the full path. So store the previs pos, and keep drawing from the previs to the current one?
