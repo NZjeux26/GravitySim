@@ -26,7 +26,7 @@ satellite = PointMass(
     position=[280.0,400.0,0.0],
     mass=100,
     radius=1,
-    velocity=[0.0,7723.0,0.0], #need an intial velocity or else it'll jsut fall to the central mass
+    velocity=[0.0,7718.0,0.0], #need an intial velocity or else it'll jsut fall to the central mass
     acceleration=[0.0,0.0,0.0],
     colour=[255,255,255]
 )
@@ -79,22 +79,26 @@ while running:
             running = False
     
     dt = clock.tick(fps) / 1000.0
-  
-    #attempt with leap frog intergration. Still unstable, it's not terrible but the varenice is still high.
-    #Update
-    satellite.velocity += 0.5 * satellite.acceleration * dt
-    
-    #change to the position
+    #Euler Intergration.
+    satellite.acceleration = satellite.acceleration_due_to_gravity(planet)
+    satellite.velocity += satellite.acceleration * dt
     satellite.position += (satellite.velocity / 1000) #convert into kilometers
     
+    #Leap frog intergration. Weirdly it's still the same error varience (well close enough that i cannot tell) as Euler when it should be much more accurate
+    #Update Veloicty
+    #satellite.velocity += 0.5 * satellite.acceleration * dt
+    
+    #change to the position
+    #satellite.position += (satellite.velocity / 1000) #convert into kilometers
+    
     #calculate acceleration
-    satellite.acceleration = satellite.acceleration_due_to_gravity(planet)
+    #satellite.acceleration = satellite.acceleration_due_to_gravity(planet)
     
     #Update Velocity
-    satellite.velocity += 0.5 * satellite.acceleration * dt
+    #satellite.velocity += 0.5 * satellite.acceleration * dt
     
     #Add old position to array for drawing
-    positions.append((int(satellite.position[0]), satellite.position[1]))
+    positions.append((int(satellite.position[0]), satellite.position[1])) #This WILL cause an oevrflow if left long enough
     
     #update onscreen numbers
     satalt = satellite.distance_to(planet)
