@@ -49,3 +49,11 @@ class PointMass:
         r = other.radius + self.distance_to(other) * 1000 # centre of earth to surface + alt which are in KM then converted into meters
         v = math.sqrt(Constants.mu_earth / r)
         return v
+    def get_orbital_period(self,other): # this is for a circular orbit
+        r = self.distance_to(other) * 1000 
+        v = self.get_velocity(other)
+        c = 2 * math.pi * r
+        
+        period = c / v
+        return period
+        

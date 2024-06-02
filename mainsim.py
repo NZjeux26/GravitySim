@@ -2,6 +2,7 @@ import pygame
 import sys
 import time
 import numpy as np
+import math
 from objects import Constants, PointMass
 # Initialize Pygame
 pygame.init()
@@ -79,6 +80,17 @@ def euler_integration(satellite, planet, dt):
     satellite.acceleration = satellite.acceleration_due_to_gravity(planet)
     satellite.velocity += satellite.acceleration * dt
     satellite.position += (satellite.velocity / 1000) #convert into kilometers
+    
+def verlet_integration(satellite, planet, dt):
+    acc = satellite.acceleration_due_to_gravity(planet)
+    
+    new_pos = satellite.position + ((satellite.velocity / 1000) * dt) + 0.5 * acc * dt**2
+    new_acc = satellite.acceleration_due_to_gravity(planet)
+    new_vel = satellite.velocity + 0.5 * (acc + new_acc) * dt
+    
+    satellite.position = new_pos
+    satellite.velocity = new_vel
+    satellite.acceleration = new_acc
 
 #actual drawing of obejcts on screen
 circle_radius = 10
@@ -92,7 +104,9 @@ orbits = 0
 in_start_area = False
 has_left_start_area = False
 
-prev_position = satellite.position
+# Time parameters
+dt = 0.02 # Time step (seconds) works great with leapfrog and euler but fps seems to control the sim way to much
+
 # Main loop
 running = True
 while running:
@@ -100,20 +114,17 @@ while running:
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             running = False
+            
+    #dt = clock.tick(fps) / 1000.0
     
-    dt = clock.tick(fps) / 1000.0
     #Euler Intergration.
     #euler_integration(satellite, planet, dt)
     
     #Leapfrog integration
-    leapfrog_integration(satellite, planet, dt)
+    #leapfrog_integration(satellite, planet, dt)
     
     #Verlet intergration(not working)
-    # satellite.acceleration = satellite.acceleration_due_to_gravity(planet)
-    
-    # new_pos = 2 * satellite.position - prev_position + satellite.acceleration * dt**2
-    # prev_position = satellite.position
-    # satellite.position = new_pos
+    verlet_integration(satellite, planet, dt)
     
     #Add old position to array for drawing
     positions.append((int(satellite.position[0]), satellite.position[1])) #This WILL cause an oevrflow if left long enough
