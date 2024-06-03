@@ -8,14 +8,15 @@ class Constants:
 
 class PointMass:
     def __init__(self, position, mass, radius, colour, velocity, acceleration):
-        self.position = np.array(position)
+        self.position = np.array(position) #in KM
         self.mass = mass #in Kilograms
         self.radius = radius #in meters
         self.colour = colour
         self.velocity = np.array(velocity) #in m/s
         self.acceleration = np.array(acceleration) #in m/s per second
         self.gForce = None #This is in Newtons
-    
+        self.previous_position = self.position - (self.velocity / 1000)  # Initialize previous position for Verlet integration
+
     #see textfile for more information
     def cal_gForce(self,other_mass, distance):
         return Constants.gravitational_constant * (self.mass * other_mass) / distance**2
@@ -32,7 +33,6 @@ class PointMass:
         distance_m = distance_km * 1000 + other.radius #the distance including the radius to the centre in meters
         unit_vector = (dVector / distance_km) #the unit vector for the direction of the force
         acceleration_magnitude = -Constants.mu_earth / distance_m**2
-        #acceleration_magnitude = -Constants.gravitational_constant * other.mass / distance_m**2  #magnitude of the acceleration due to gravity in meters ** This is actually the G force
         return acceleration_magnitude * (unit_vector * 1000) #Return the acceleration vector by multiplying the magnitude with the unit vector(converted to meters)
         #the returned acceleration vector is in m/s
    
@@ -56,4 +56,13 @@ class PointMass:
         
         period = c / v
         return period
+    def calculate_gravity(self,other):
+        r_vector = (self.position - other.position) * 1000 #convert to meters
+        r_mag = np.linalg.norm(r_vector) + other.radius#stright line distance
+        
+        force_mag = -Constants.mu_earth / r_mag**2
+        force_vector = force_mag * (r_vector / r_mag) #here
+        self.gForce = force_vector
+        acceleration = force_vector / self.mass
+        return acceleration * (force_vector * 1000)
         
