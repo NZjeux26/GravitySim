@@ -28,7 +28,7 @@ satellite = PointMass(
     mass=100,
     radius=1,
     velocity=[0.0,7718.0,0.0], #need an intial velocity or else it'll jsut fall to the central mass
-    acceleration=[1.0,0.0,0.0],
+    acceleration=[1.0,0.0,0.0],#added an non-zero acceleration jsut to make sure there's no issues with the intergrations.
     colour=[255,255,255]
 )
 
@@ -93,6 +93,26 @@ def verlet_integration(satellite, planet, dt):
     satellite.position = new_pos #km
     satellite.velocity = (satellite.position - satellite.previous_position)
 
+def rk4_intergration(satellite, planet, dt):# need to resolve the conversion to km for position. If i remove the DT from the kx_r then it's the excat same as Verlet and Euler
+    def get_acceleration(position, velocity):
+        temp_mass = PointMass(position,satellite.mass,satellite.radius,satellite.colour,(velocity), np.zeros_like(satellite.acceleration))
+        return temp_mass.acceleration_due_to_gravity(planet)
+    
+    k1_v = dt * get_acceleration(satellite.position, (satellite.velocity))
+    k1_r = dt * (satellite.velocity / 1000)
+    
+    k2_v = dt * get_acceleration(satellite.position + 0.5 * k1_r, (satellite.velocity) + 0.5 * k1_v)
+    k2_r = dt * (satellite.velocity + 0.5 * k1_v) / 1000
+    
+    k3_v = dt * get_acceleration(satellite.position + 0.5 * k2_r, (satellite.velocity) + 0.5 * k2_v)
+    k3_r = dt * (satellite.velocity + 0.5 * k2_v) / 1000
+    
+    k4_v = dt * get_acceleration(satellite.position + 0.5 * k3_r, (satellite.velocity) + 0.5 * k3_v)
+    k4_r = dt * (satellite.velocity + 0.5 * k3_v) / 1000
+    
+    satellite.position +=(k1_r + 2*k2_r + 2*k3_r + k4_r) / 6 
+    satellite.velocity +=(k1_v + 2*k2_v + 2*k3_v + k4_v) / 6
+        
 #actual drawing of obejcts on screen
 circle_radius = 10
 c1_pos = (planet.position[0],planet.position[1])
@@ -106,7 +126,7 @@ in_start_area = False
 has_left_start_area = False
 
 # Time parameters
-#dt = 0.000001 # Time step (seconds) works great with leapfrog and euler but fps seems to control the sim way to much
+#dt = 1
 
 # Main loop
 running = True
@@ -119,14 +139,16 @@ while running:
     dt = clock.tick(fps) / 1000.0
     
     #Euler Intergration.
-    euler_integration(satellite, planet, dt)
+    #euler_integration(satellite, planet, dt)
     
     #Leapfrog integration
     #leapfrog_integration(satellite, planet, dt)
     
     #Verlet intergration()
-   #verlet_integration(satellite, planet, dt)
+    #verlet_integration(satellite, planet, dt)
     
+    #RK4 intergration()
+    rk4_intergration(satellite, planet, dt)
     #Add old position to array for drawing
     positions.append((int(satellite.position[0]), satellite.position[1])) #This WILL cause an oevrflow if left long enough
     
