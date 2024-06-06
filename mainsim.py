@@ -145,10 +145,10 @@ while running:
     #leapfrog_integration(satellite, planet, dt)
     
     #Verlet intergration()
-    #verlet_integration(satellite, planet, dt)
+    verlet_integration(satellite, planet, dt)
     
     #RK4 intergration()
-    #rk4_intergration(satellite, planet, dt)
+   # rk4_intergration(satellite, planet, dt)
     #Add old position to array for drawing
     positions.append((int(satellite.position[0]), satellite.position[1])) #This WILL cause an oevrflow if left long enough
     
