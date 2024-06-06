@@ -5,3 +5,5 @@ How to work out the starting values automatically without manual calculation
 How to Replace the Leap-Frog intergration with a third or forth order intergration
 How to control the orbiting object 
 How to slow the simulation to be 1:1 to real time.
+Why are three of the four intergrations done all having the same results?
+How to do elipses

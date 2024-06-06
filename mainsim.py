@@ -99,16 +99,16 @@ def rk4_intergration(satellite, planet, dt):# need to resolve the conversion to 
         return temp_mass.acceleration_due_to_gravity(planet)
     
     k1_v = dt * get_acceleration(satellite.position, (satellite.velocity))
-    k1_r = dt * (satellite.velocity / 1000)
+    k1_r = (satellite.velocity / 1000)
     
     k2_v = dt * get_acceleration(satellite.position + 0.5 * k1_r, (satellite.velocity) + 0.5 * k1_v)
-    k2_r = dt * (satellite.velocity + 0.5 * k1_v) / 1000
+    k2_r = (satellite.velocity + 0.5 * k1_v) / 1000
     
     k3_v = dt * get_acceleration(satellite.position + 0.5 * k2_r, (satellite.velocity) + 0.5 * k2_v)
-    k3_r = dt * (satellite.velocity + 0.5 * k2_v) / 1000
+    k3_r = (satellite.velocity + 0.5 * k2_v) / 1000
     
     k4_v = dt * get_acceleration(satellite.position + 0.5 * k3_r, (satellite.velocity) + 0.5 * k3_v)
-    k4_r = dt * (satellite.velocity + 0.5 * k3_v) / 1000
+    k4_r = (satellite.velocity + 0.5 * k3_v) / 1000
     
     satellite.position +=(k1_r + 2*k2_r + 2*k3_r + k4_r) / 6 
     satellite.velocity +=(k1_v + 2*k2_v + 2*k3_v + k4_v) / 6
@@ -139,7 +139,7 @@ while running:
     dt = clock.tick(fps) / 1000.0
     
     #Euler Intergration.
-    #euler_integration(satellite, planet, dt)
+    euler_integration(satellite, planet, dt)
     
     #Leapfrog integration
     #leapfrog_integration(satellite, planet, dt)
@@ -148,7 +148,7 @@ while running:
     #verlet_integration(satellite, planet, dt)
     
     #RK4 intergration()
-    rk4_intergration(satellite, planet, dt)
+    #rk4_intergration(satellite, planet, dt)
     #Add old position to array for drawing
     positions.append((int(satellite.position[0]), satellite.position[1])) #This WILL cause an oevrflow if left long enough
     
@@ -198,3 +198,16 @@ sys.exit()
 
 
 #Notes
+#Observations:
+
+#Euler Method
+#< 10 orbits it's reasonably stable and accurate. However past like 25 it's about 25px and by 50 orbits it's either at 40px or flying off weirdly
+
+#Leapfrog
+#Most accurate under 10 orbits staying around 5-9 px. Above 25 it evens out to the same as Euler but is more stable over longer orbits 100+
+
+#Verlet
+#Same accuracy as Euler but doesn't tend ot fly off after 70 orbits
+
+#RK
+#Same as Verlet and Euler for under 10 orbits but above it slowly looses eneregy which is translating into a slow velocity and a high alt.
