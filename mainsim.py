@@ -27,7 +27,7 @@ satellite = PointMass(
     position=[280.0,400.0,0.0],
     mass=100,
     radius=1,
-    velocity=[0.0,7718.0,0.0], #need an intial velocity or else it'll jsut fall to the central mass
+    velocity=[0.0,34618.0,0.0], #need an intial velocity or else it'll jsut fall to the central mass
     acceleration=[1.0,0.0,0.0],#added an non-zero acceleration jsut to make sure there's no issues with the intergrations.
     colour=[255,255,255]
 )
@@ -81,9 +81,9 @@ def leapfrog_integration(satellite, planet, dt): #most accurate under 5 orbits
 
 def euler_integration(satellite, planet, dt):
    # satellite.accleration = satellite.calculate_gravity(planet)
-    satellite.acceleration = satellite.acceleration_due_to_gravity(planet)
+    satellite.acceleration = planet.acceleration_due_to_gravity(satellite)
     satellite.velocity += satellite.acceleration * dt
-    satellite.position += (satellite.velocity / 1000) #convert into kilometers
+    satellite.position += (satellite.velocity / 1000) * dt#convert into kilometers
     
 def verlet_integration(satellite, planet, dt):
     acc_c = (satellite.acceleration_due_to_gravity(planet) / 1000)#convert to km/s
@@ -93,22 +93,22 @@ def verlet_integration(satellite, planet, dt):
     satellite.position = new_pos #km
     satellite.velocity = (satellite.position - satellite.previous_position)
 
-def rk4_intergration(satellite, planet, dt):# need to resolve the conversion to km for position. If i remove the DT from the kx_r then it's the excat same as Verlet and Euler
+def rk4_intergration(satellite, planet, dt):
     def get_acceleration(position, velocity):
         temp_mass = PointMass(position,satellite.mass,satellite.radius,satellite.colour,(velocity), np.zeros_like(satellite.acceleration))
-        return temp_mass.acceleration_due_to_gravity(planet)
+        return planet.acceleration_due_to_gravity(temp_mass)
     
     k1_v = dt * get_acceleration(satellite.position, (satellite.velocity))
-    k1_r = (satellite.velocity / 1000)
+    k1_r = dt * (satellite.velocity / 1000)
     
     k2_v = dt * get_acceleration(satellite.position + 0.5 * k1_r, (satellite.velocity) + 0.5 * k1_v)
-    k2_r = (satellite.velocity + 0.5 * k1_v) / 1000
+    k2_r = dt * (satellite.velocity + 0.5 * k1_v) / 1000
     
     k3_v = dt * get_acceleration(satellite.position + 0.5 * k2_r, (satellite.velocity) + 0.5 * k2_v)
-    k3_r = (satellite.velocity + 0.5 * k2_v) / 1000
+    k3_r = dt * (satellite.velocity + 0.5 * k2_v) / 1000
     
-    k4_v = dt * get_acceleration(satellite.position + 0.5 * k3_r, (satellite.velocity) + 0.5 * k3_v)
-    k4_r = (satellite.velocity + 0.5 * k3_v) / 1000
+    k4_v = dt * get_acceleration(satellite.position + k3_r, (satellite.velocity) + k3_v)
+    k4_r = dt * (satellite.velocity + k3_v) / 1000
     
     satellite.position +=(k1_r + 2*k2_r + 2*k3_r + k4_r) / 6 
     satellite.velocity +=(k1_v + 2*k2_v + 2*k3_v + k4_v) / 6

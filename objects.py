@@ -27,13 +27,13 @@ class PointMass:
         #Each Pixel is 1KM so the result in the test data says 360 so i need to times that by 1000 
         return distance
     def acceleration_due_to_gravity(self,other):
-        dVector = self.position - other.position # distance vector from self to the other point mass in pixels(km)
+        dVector = other.position - self.position# distance vector from self to the other point mass in pixels(km)
         distance_km = np.linalg.norm(dVector)  #Compute the Euclidean distance in km
 
-        distance_m = distance_km * 1000 + other.radius #the distance including the radius to the centre in meters
+        distance_m = distance_km * 1000 #+ other.radius #the distance including the radius to the centre in meters
         unit_vector = (dVector / distance_km) #the unit vector for the direction of the force
         acceleration_magnitude = -Constants.mu_earth / distance_m**2
-        return acceleration_magnitude * (unit_vector * 1000) #Return the acceleration vector by multiplying the magnitude with the unit vector(converted to meters)
+        return acceleration_magnitude * unit_vector #Return the acceleration vector by multiplying the magnitude with the unit vector(converted to meters)
         #the returned acceleration vector is in m/s
    
     def get_theta_angle(self, other):
@@ -56,13 +56,11 @@ class PointMass:
         
         period = c / v
         return period
-    def calculate_gravity(self,other):
-        r_vector = (self.position - other.position) * 1000 #convert to meters
-        r_mag = np.linalg.norm(r_vector) + other.radius#stright line distance
-        
-        force_mag = -Constants.mu_earth / r_mag**2
-        force_vector = force_mag * (r_vector / r_mag) #here
-        self.gForce = force_vector
-        acceleration = force_vector / self.mass
-        return acceleration * (force_vector * 1000)
+    def new_acceleration_due_to_gravity( self, other ):
+        dVector = self.position - other.position
+        distance_km = np.linalg.norm(dVector)
+        distance_m = distance_km * 1000
+        unit_vector = (dVector / distance_km)
+        acceleration_magnitude = Constants.mu_earth / distance_m**2
+        return acceleration_magnitude * unit_vector
         
