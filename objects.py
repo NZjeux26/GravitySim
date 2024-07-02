@@ -22,17 +22,16 @@ class PointMass:
         return Constants.gravitational_constant * (self.mass * other_mass) / distance**2
  
     def distance_to(self, other):
-        dVector = self.position - other.position
+        dVector = other.position - self.position
         distance = np.linalg.norm(dVector)
-        #Each Pixel is 1KM so the result in the test data says 360 so i need to times that by 1000 
+        
         return distance
     def acceleration_due_to_gravity(self,other):
-        dVector = other.position - self.position# distance vector from self to the other point mass in pixels(km)
-        distance_km = np.linalg.norm(dVector)  #Compute the Euclidean distance in km
+        dVector = other.position - self.position# distance vector from self to the other point mass
+        r = np.linalg.norm(dVector) #+ self.radius #Compute the Euclidean distance
 
-        distance_m = distance_km * 1000 #+ other.radius #the distance including the radius to the centre in meters
-        unit_vector = (dVector / distance_km) #the unit vector for the direction of the force
-        acceleration_magnitude = -Constants.mu_earth / distance_m**2
+        unit_vector = (dVector / r) #the unit vector for the direction of the force
+        acceleration_magnitude = -Constants.mu_earth / r**2
         return acceleration_magnitude * unit_vector #Return the acceleration vector by multiplying the magnitude with the unit vector(converted to meters)
         #the returned acceleration vector is in m/s
    
@@ -46,21 +45,22 @@ class PointMass:
         theta_degrees = np.degrees(theta_radians)
         return theta_degrees
     def get_velocity(self,other): # this is for a circular orbit
-        r = other.radius + self.distance_to(other) * 1000 # centre of earth to surface + alt which are in KM then converted into meters
+        r = other.distance_to(self) #* 1000 # centre of earth to surface + alt which are in KM then converted into meters
         v = math.sqrt(Constants.mu_earth / r)
         return v
+    
     def get_orbital_period(self,other): # this is for a circular orbit
-        r = self.distance_to(other) * 1000 
-        v = self.get_velocity(other)
+        r = other.distance_to(self)
+        v = other.get_velocity(self)
         c = 2 * math.pi * r
         
         period = c / v
-        return period
-    def new_acceleration_due_to_gravity( self, other ):
-        dVector = self.position - other.position
-        distance_km = np.linalg.norm(dVector)
-        distance_m = distance_km * 1000
-        unit_vector = (dVector / distance_km)
-        acceleration_magnitude = Constants.mu_earth / distance_m**2
-        return acceleration_magnitude * unit_vector
-        
+        return period 
+    def new_acceleration_due_to_gravity(self,other):
+        dVector = other.position - self.position# distance vector from self to the other point mass in pixels(km)
+        distance_km = np.linalg.norm(dVector) + (self.radius / 1000)#the distance including the radius to the centre in meters  #Compute the Euclidean distance in km
+
+        distance_m = distance_km * 1000 
+        unit_vector = (dVector / distance_km) #the unit vector for the direction of the force
+        acceleration_magnitude = -Constants.mu_earth / distance_m**2
+        return acceleration_magnitude * unit_vector #Retu    

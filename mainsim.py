@@ -8,14 +8,14 @@ from objects import Constants, PointMass
 pygame.init()
 
 # Set up the window
-window_size = (1200, 800)
+window_size = (1920, 1080)
 window = pygame.display.set_mode(window_size)
 pygame.display.set_caption("Two Body Simulation")
 # Create a font object
 font = pygame.font.SysFont(None, 24)
                         # x, y ,z
 planet = PointMass(
-    position=[600.0,400.0,0.0],
+    position=[0.0,0.0,0.0],
     mass=5.9722e24,
     radius=6.371e6,
     velocity=[0.0,0.0,0.0], #in m/s
@@ -24,11 +24,11 @@ planet = PointMass(
 )
 
 satellite = PointMass(
-    position=[280.0,400.0,0.0],
+    position=[-320e3,0.0,0.0], #the planet is the 0,0,0 (centre) so the position is now realtive to that.
     mass=100,
     radius=1,
-    velocity=[0.0,34618.0,0.0], #need an intial velocity or else it'll jsut fall to the central mass
-    acceleration=[1.0,0.0,0.0],#added an non-zero acceleration jsut to make sure there's no issues with the intergrations.
+    velocity=[0.0,35142.0,0.0], #need an intial velocity or else it'll jsut fall to the central mass 35100.0 @300km
+    acceleration=[0.0,0.0,0.0],#added an non-zero acceleration jsut to make sure there's no issues with the intergrations.
     colour=[255,255,255]
 )
 
@@ -69,34 +69,38 @@ def draw_grid():
         pygame.draw.line(window, [255,255,255], (0, y), (window_size[0], y))
 #drawn objects
 
+def transform_position(position, window_size, scale_factor=1e-3):
+    transformed_x = int(position[0] * scale_factor) + window_size[0] // 2
+    transformed_y = int(position[1] * scale_factor) + window_size[1] // 2
+    return (transformed_x, transformed_y)
+
 def leapfrog_integration(satellite, planet, dt): #most accurate under 5 orbits
     # Update velocity by half-step
-    satellite.velocity += 0.5 * satellite.acceleration * dt
+    satellite.velocity += dt * 0.5 * satellite.acceleration
     # Update position
     satellite.position += (satellite.velocity / 1000)
     # Calculate new acceleration
-    satellite.acceleration = satellite.acceleration_due_to_gravity(planet)
+    satellite.acceleration = planet.acceleration_due_to_gravity(satellite)
     # Update velocity by another half-step
-    satellite.velocity += 0.5 * satellite.acceleration * dt
+    satellite.velocity += dt * 0.5 * satellite.acceleration
 
 def euler_integration(satellite, planet, dt):
-   # satellite.accleration = satellite.calculate_gravity(planet)
     satellite.acceleration = planet.acceleration_due_to_gravity(satellite)
     satellite.velocity += satellite.acceleration * dt
-    satellite.position += (satellite.velocity / 1000) * dt#convert into kilometers
+    satellite.position += satellite.velocity * dt
     
 def verlet_integration(satellite, planet, dt):
-    acc_c = (satellite.acceleration_due_to_gravity(planet) / 1000)#convert to km/s
+    acc_c = planet.acceleration_due_to_gravity(satellite)     #convert to km/s
     satellite.velocity = (satellite.position - satellite.previous_position)
-    new_pos = 2 * satellite.position - satellite.previous_position + (acc_c * dt) 
-    satellite.previous_position = satellite.position #km
-    satellite.position = new_pos #km
+    new_pos = 2 * satellite.position - satellite.previous_position + (acc_c / 1000)
+    satellite.previous_position = satellite.position
+    satellite.position = new_pos
     satellite.velocity = (satellite.position - satellite.previous_position)
 
 def rk4_intergration(satellite, planet, dt):
     def get_acceleration(position, velocity):
         temp_mass = PointMass(position,satellite.mass,satellite.radius,satellite.colour,(velocity), np.zeros_like(satellite.acceleration))
-        return planet.acceleration_due_to_gravity(temp_mass)
+        return planet.new_acceleration_due_to_gravity(temp_mass)
     
     k1_v = dt * get_acceleration(satellite.position, (satellite.velocity))
     k1_r = dt * (satellite.velocity / 1000)
@@ -115,11 +119,13 @@ def rk4_intergration(satellite, planet, dt):
         
 #actual drawing of obejcts on screen
 circle_radius = 10
-c1_pos = (planet.position[0],planet.position[1])
-c2_pos = (int(satellite.position[0]), int(satellite.position[1]))
-   
+#c1_pos = (planet.position[0],planet.position[1])
+#c2_pos = (int(satellite.position[0]), int(satellite.position[1]))
+c1_pos = transform_position(planet.position, window_size)
+c2_pos = transform_position(satellite.position, window_size)  
+
 clock = pygame.time.Clock()
-fps = 50 #50 ends up giving a dt of 0.021 which seems to really work well with the sim
+fps = 60 #50 ends up giving a dt of 0.021 which seems to really work well with the sim
 positions = []
 orbits = 0
 in_start_area = False
@@ -139,7 +145,7 @@ while running:
     dt = clock.tick(fps) / 1000.0
     
     #Euler Intergration.
-    #euler_integration(satellite, planet, dt)
+    euler_integration(satellite, planet, dt)
     
     #Leapfrog integration
     #leapfrog_integration(satellite, planet, dt)
@@ -148,12 +154,13 @@ while running:
     #verlet_integration(satellite, planet, dt)
     
     #RK4 intergration()
-    rk4_intergration(satellite, planet, dt)
+    #rk4_intergration(satellite, planet, dt)
     #Add old position to array for drawing
-    positions.append((int(satellite.position[0]), satellite.position[1])) #This WILL cause an oevrflow if left long enough
+    #positions.append((int(satellite.position[0]), satellite.position[1])) #This WILL cause an oevrflow if left long enough
+    positions.append(transform_position(satellite.position, window_size))
     
     # Check if satellite is in the starting area
-    current_in_start_area = (200 < satellite.position[0] < 300) and (400 < satellite.position[1] < 500)
+    current_in_start_area = (200e3 < satellite.position[0] < 300e3) and (400e3 < satellite.position[1] < 500e3)
     
     if current_in_start_area:
         if not in_start_area and has_left_start_area:
@@ -166,17 +173,17 @@ while running:
         in_start_area = False
     
     #update onscreen numbers
-    satalt = satellite.distance_to(planet)
-    theta = satellite.get_theta_angle(planet)
-    satellite_velocity = satellite.get_velocity(planet) 
+    satalt = planet.distance_to(satellite) / 1000 #converted to 
+    theta = planet.get_theta_angle(satellite)
+    satellite_velocity = planet.get_velocity(satellite) / 1000
     
     #update the position of the drawn obejct on screen
-    c1_pos = (planet.position[0],planet.position[1])
-    c2_pos = (int(satellite.position[0]), int(satellite.position[1]))
+    c1_pos = transform_position(planet.position, window_size)
+    c2_pos = transform_position(satellite.position, window_size)
    
     #Draw
     window.fill((0,0,0))
-    pygame.draw.circle(window, planet.colour, c1_pos, 25)
+    pygame.draw.circle(window, planet.colour, c1_pos, 30)
     pygame.draw.circle(window, satellite.colour, c2_pos, 5)
     #Draw orbit trace on screen
     if len(positions) > 1:
@@ -195,19 +202,3 @@ while running:
 # Quit Pygame
 pygame.quit()
 sys.exit()
-
-
-#Notes
-#Observations:
-
-#Euler Method
-#< 10 orbits it's reasonably stable and accurate. However past like 25 it's about 25px and by 50 orbits it's either at 40px or flying off weirdly
-
-#Leapfrog
-#Most accurate under 10 orbits staying around 5-9 px. Above 25 it evens out to the same as Euler but is more stable over longer orbits 100+
-
-#Verlet
-#Same accuracy as Euler but doesn't tend ot fly off after 70 orbits
-
-#RK
-#Same as Verlet and Euler for under 10 orbits but above it slowly looses eneregy which is translating into a slow velocity and a high alt.
