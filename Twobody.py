@@ -8,10 +8,13 @@ from datetime import datetime, timedelta
 # Initialize Pygame
 pygame.init()
 ### THINGS TO ADD ####
-
+### barycentres mark
+### For loop so each object is checked against the other without having to be manually added
+### Objects initional velocity is automatically calculated for circular orbit at that height
+### Plot lines for all objects DONE
 
 # Set up the window
-window_size = (2560, 1440)
+window_size = (1920, 1080)
 window = pygame.display.set_mode(window_size)
 pygame.display.set_caption("N Body Simulation")
 # Create a font object
@@ -28,7 +31,7 @@ planet = PointMass( #even though this is called a planet let's just pretend it's
 )
 
 satellite = PointMass(
-    position=[620e3,0.0,0.0], #the planet is the 0,0,0 (centre) so the position is now realtive to that. Currently that 320km + Planet Radius
+    position=[320e3,0.0,0.0], #the planet is the 0,0,0 (centre) so the position is now realtive to that. Currently that 320km + Planet Radius
     mass=100,
     radius=1,
     velocity=[0.0,0.0,0.0], #need an intial velocity or else it'll jsut fall to the central mass 35100.0 @300km || Using a neg number here instead of the position at the start since it's easier
@@ -38,7 +41,7 @@ satellite = PointMass(
 )
 
 moon = PointMass(
-    position=[38440,0.0,0.0],
+    position=[384400000,0.0,0.0],
     mass = 7.3476e22,
     radius = 1.737e6,
     velocity=[0.0,1022,0.0],#25930
@@ -46,6 +49,36 @@ moon = PointMass(
     colour=[200,200,200],
     name="moon"
 )
+def draw_info(surface, font, satellite):
+    velocity_text = f"Velocity: {satellite.velocity}"
+    acceleration_text = f"Acceleration: {satellite.acceleration}"
+    position_text = f"Position: {satellite.position}"
+    alt_text = f"Altitude: {satalt}"
+   # theta_text = f"Theta: {theta}"
+    velocityMag_text = f"Velocity_Mag: {satellite_velocity}"
+    Orbit_amount_text = f"Orbit Count: {orbits}"
+    delta_t = f"Delta T: {dt}"
+    timer_text = f"Elapsed Time: {elapsed_time}"
+    
+    velocity_surface = font.render(velocity_text, True, (255, 255, 255))
+    acceleration_surface = font.render(acceleration_text, True, (255, 255, 255))
+    position_surface = font.render(position_text, True, (255, 255, 255))
+    alt_sat = font.render(alt_text, True, (255, 255, 255))
+   # theta_sat = font.render(theta_text, True, (255, 255, 255))
+    velocity_sat = font.render(velocityMag_text, True, (255, 255, 255))
+    orbit_sat = font.render(Orbit_amount_text,True,(255,255,255))
+    deltat = font.render(delta_t,True,(255,255,255))
+    timer_surface = font.render(timer_text, True, (255, 255, 255))
+    
+    surface.blit(velocity_surface, (20, 20))
+    surface.blit(acceleration_surface, (20, 50))
+    surface.blit(position_surface, (20, 80))
+    surface.blit(alt_sat, (20, 110))
+    #surface.blit(theta_sat, (20, 140))
+    surface.blit(velocity_sat, (20, 170))
+    surface.blit(orbit_sat, (20, 200))
+    surface.blit(deltat, (20, 230))
+    surface.blit(timer_surface, (20, 260))
     
 grid_spacing = 50
 # Function to draw the grid
@@ -54,17 +87,18 @@ def draw_grid():
         pygame.draw.line(window, [255,255,255], (x, 0), (x, window_size[1]))
     for y in range(0, window_size[1], grid_spacing):
         pygame.draw.line(window, [255,255,255], (0, y), (window_size[0], y))
+#drawn objects
 
 def transform_position(position, window_size, scale_factor=1e-3):
     transformed_x = int(position[0] * scale_factor) + window_size[0] // 2
     transformed_y = int(position[1] * scale_factor) + window_size[1] // 2
     return (transformed_x, transformed_y)
 
-def leapfrog_integration(satellite, planet, dt):
+def leapfrog_integration(satellite, planet, dt): #most accurate under 5 orbits
     # Update velocity by half-step
     satellite.velocity += dt * 0.5 * satellite.acceleration
     # Update position
-    satellite.position += satellite.velocity
+    satellite.position += (satellite.velocity / 1000)
     # Calculate new acceleration
     satellite.acceleration = planet.acceleration_due_to_gravity(satellite)
     # Update velocity by another half-step
@@ -108,44 +142,21 @@ def get_starting_velocity(PointMass):
     v = math.sqrt(v2)
     return v
 
-def update_positons():
-    c1_pos = transform_position(planet.position, window_size)
-    c2_pos = transform_position(satellite.position, window_size)  
-    c3_pos = transform_position(moon.position,window_size)
-    
-    for obj in objects:
-        if obj.name != "planet" or obj.name != "sat" or obj.name != "moon":
-            cpositions.append(transform_position(obj.position, window_size))
-
-objects = [planet, satellite, moon] #list of pointmasses
-for i in range(97):
-    objects.append(PointMass(f"obj{i}",
-                             [np.random.uniform(-1e6,1e6), np.random.uniform(-1e6,1e6), 0], #position
-                             [np.random.uniform(1,1e6)], #mass
-                             [np.random.uniform(1,1e4)], #radius
-                             (np.random.randint(0, 255), np.random.randint(0, 255), np.random.randint(0, 255)), #colour
-                             [0, np.random.uniform(-5e4,5e4), 0], #veloctiy
-                             (0,0,0))) #acceleration
-    
-positions = { obj.name: [] for obj in objects }
-cpositions = []
-
 #actual drawing of obejcts on screen
 circle_radius = 10
-update_positons()
+c1_pos = transform_position(planet.position, window_size)
+c2_pos = transform_position(satellite.position, window_size)  
+c3_pos = transform_position(moon.position,window_size)
 
-#need to have it so it only does from range 3-100
-for obj in objects:
-    if obj.name != "planet" or obj.name != "sat" or obj.name != "moon":
-        cpositions.append(transform_position(obj.position,window_size))
-    
 #set the starting velocity(ies)
-satellite.velocity[1] = -get_starting_velocity(satellite)
+satellite.velocity[1] = - 45600#-get_starting_velocity(satellite)
 
 clock = pygame.time.Clock()
 fps = 60
 
+objects = [planet, satellite, moon] #list of pointmasses
 
+positions = { obj.name: [] for obj in objects }
 orbits = 0
 pos_count = 0
 in_start_area = False
@@ -165,10 +176,23 @@ while running:
             
     dt = 0.017#clock.tick(fps) / 1000.0
     
+    #Euler Intergration. #need to make this more like a for loop for each combo of obejct (n_body) or just between object-planet planet-object
+    #euler_integration(satellite, planet, dt)
+    #euler_integration(moon,planet,dt)
+    #euler_integration(planet, moon,dt)
+    
+    #euler_integration(satellite,moon,dt)
+    
+    #Leapfrog integration
+    #leapfrog_integration(satellite, planet, dt)
+    
+    #Verlet intergration()
+    #verlet_integration(satellite, planet, dt)
+    
     #RK4 intergration()
-    rk4_intergration(satellite, planet, dt) #grav influence of planet on the sat
-    rk4_intergration(planet,satellite,dt) #grav influence of the sat on the planet
-     
+    rk4_intergration(satellite, planet, dt)
+    
+    #Add old position to array for drawing ### Need to make this to go though each object (if onscreen) in a 0=sat 1=moon 3=planet offset 
     pos_count +=1
     if pos_count % 10 == 0:
         for obj in objects:
@@ -198,23 +222,16 @@ while running:
     elapsed_time = datetime.now() - start_time
     elapsed_time_str = str(elapsed_time).split('.')[0]  # Format as HH:MM:SS
     
-    #update the position of the drawn obejct on screen##
-    update_positons()
+    #update the position of the drawn obejct on screen
+    c1_pos = transform_position(planet.position, window_size)
+    c2_pos = transform_position(satellite.position, window_size)
+    c3_pos = transform_position(moon.position,window_size)
     
-    #need to have it so it only does from range 3-100##
-    for obj in objects:
-        if obj.name != "planet" or "sat" or "moon":
-            cpositions.append(transform_position(obj.position,window_size))
-    ## could probably put this into it's own function to reduce copying
     #Draw
     window.fill((0,0,0))
     pygame.draw.circle(window, planet.colour, c1_pos, 30)
     pygame.draw.circle(window, satellite.colour, c2_pos, 4)
     pygame.draw.circle(window, moon.colour, c3_pos, 12)
-    
-    for obj in objects:
-        if obj.name != "planet" or "sat" or "moon":
-            pygame.draw.circle(window, obj.colour, cpositions, 2)
     
     #Draw orbit trace on screen
     for key, pos_list in positions.items():
@@ -223,7 +240,7 @@ while running:
                 pygame.draw.line(window, (205, 205, 205), pos_list[i], pos_list[i + 1], 1)
 
     #Draw information
-    #draw_info(window, font, satellite)
+    draw_info(window, font, satellite)
     #draw_grid()
     
     #Refresh display

@@ -7,7 +7,8 @@ class Constants:
     mu_earth = 3.986004418e14  # in m^3 s^-2
 
 class PointMass:
-    def __init__(self, position, mass, radius, colour, velocity, acceleration):
+    def __init__(self, name, position, mass, radius, colour, velocity, acceleration):
+        self.name = name
         self.position = np.array(position) #in KM
         self.mass = mass #in Kilograms
         self.radius = radius #in meters
@@ -15,7 +16,7 @@ class PointMass:
         self.velocity = np.array(velocity) #in m/s
         self.acceleration = np.array(acceleration) #in m/s per second
         self.gForce = None #This is in Newtons
-        self.previous_position = self.position - (self.velocity / 1000)  # Initialize previous position for Verlet integration
+        self.previous_position = self.position - self.velocity  # Initialize previous position for Verlet integration
 
     #see textfile for more information
     def cal_gForce(self,other_mass, distance):
@@ -28,11 +29,12 @@ class PointMass:
         return distance
     def acceleration_due_to_gravity(self,other):
         dVector = other.position - self.position# distance vector from self to the other point mass
-        r = np.linalg.norm(dVector) #+ self.radius #Compute the Euclidean distance
+        r = np.linalg.norm(dVector) #Compute the Euclidean distance
 
         unit_vector = (dVector / r) #the unit vector for the direction of the force
-        acceleration_magnitude = -Constants.mu_earth / r**2
-        return acceleration_magnitude * unit_vector #Return the acceleration vector by multiplying the magnitude with the unit vector(converted to meters)
+        #acceleration_magnitude = -Constants.mu_earth / r**2
+        acceleration_magnitude = -Constants.gravitational_constant * self.mass / r**2 #using the mass instead of Mu so it's more polymorphic.
+        return acceleration_magnitude * unit_vector #Return the acceleration vector by multiplying the magnitude with the unit vector
         #the returned acceleration vector is in m/s
    
     def get_theta_angle(self, other):
@@ -45,7 +47,7 @@ class PointMass:
         theta_degrees = np.degrees(theta_radians)
         return theta_degrees
     def get_velocity(self,other): # this is for a circular orbit
-        r = other.distance_to(self) #* 1000 # centre of earth to surface + alt which are in KM then converted into meters
+        r = other.distance_to(self)
         v = math.sqrt(Constants.mu_earth / r)
         return v
     
@@ -55,12 +57,4 @@ class PointMass:
         c = 2 * math.pi * r
         
         period = c / v
-        return period 
-    def new_acceleration_due_to_gravity(self,other):
-        dVector = other.position - self.position# distance vector from self to the other point mass in pixels(km)
-        distance_km = np.linalg.norm(dVector) + (self.radius / 1000)#the distance including the radius to the centre in meters  #Compute the Euclidean distance in km
-
-        distance_m = distance_km * 1000 
-        unit_vector = (dVector / distance_km) #the unit vector for the direction of the force
-        acceleration_magnitude = -Constants.mu_earth / distance_m**2
-        return acceleration_magnitude * unit_vector #Retu    
+        return period   
