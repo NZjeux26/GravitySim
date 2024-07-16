@@ -3,8 +3,13 @@ import sys
 import time
 import numpy as np
 import math
+import cProfile
+import pstats
 from objects import Constants, PointMass
 from datetime import datetime, timedelta
+from concurrent.futures import ThreadPoolExecutor, as_completed
+from itertools import combinations
+
 # Initialize Pygame
 pygame.init()
 ### THINGS TO ADD ####
@@ -38,7 +43,7 @@ satellite = PointMass(
 )
 
 moon = PointMass(
-    position=[38440,0.0,0.0],
+    position=[900e4,0.0,0.0],
     mass = 7.3476e22,
     radius = 1.737e6,
     velocity=[0.0,1022,0.0],#25930
@@ -55,7 +60,7 @@ def draw_grid():
     for y in range(0, window_size[1], grid_spacing):
         pygame.draw.line(window, [255,255,255], (0, y), (window_size[0], y))
 
-def transform_position(position, window_size, scale_factor=1e-3):
+def transform_position(position, window_size, scale_factor=1e-4):
     transformed_x = int(position[0] * scale_factor) + window_size[0] // 2
     transformed_y = int(position[1] * scale_factor) + window_size[1] // 2
     return (transformed_x, transformed_y)
@@ -114,37 +119,60 @@ def update_positons():
     c3_pos = transform_position(moon.position,window_size)
     
     for obj in objects:
-        if obj.name != "planet" or obj.name != "sat" or obj.name != "moon":
-            cpositions.append(transform_position(obj.position, window_size))
+        if obj.name not in ("planet", "sat", "moon"):
+            cpositions[obj.name] = transform_position(obj.position, window_size)
+    return c1_pos,c2_pos,c3_pos
 
+#multi threaded N objects calculations
+def process_obejcts(obejcts, dt):
+    relevant_objects = [obj for obj in objects if obj.name not in ("sat", "moon")]
+    
+    with ThreadPoolExecutor() as executor:
+        futures = []
+        
+        #RK4 checks all objects against the planet
+        for obj1 in relevant_objects:
+            if obj1.name != "planet":
+                futures.append(executor.submit(rk4_intergration,obj1,next(obj for obj in objects if obj.name == "planet"),dt))
+        
+        #checks all objects with eachother.
+        for obj1, obj2 in combinations(relevant_objects, 2):
+            futures.append(executor.submit(rk4_intergration,obj1,obj2,dt))
+        
+        for future in as_completed(futures):
+            future.result()
+                 
+num_objects = 5
 objects = [planet, satellite, moon] #list of pointmasses
-for i in range(97):
+for i in range(num_objects):
     objects.append(PointMass(f"obj{i}",
-                             [np.random.uniform(-1e6,1e6), np.random.uniform(-1e6,1e6), 0], #position
-                             [np.random.uniform(1,1e6)], #mass
-                             [np.random.uniform(1,1e4)], #radius
+                             [np.random.uniform(-1e7,1e7), np.random.uniform(-1e7,1e7), 0], #position
+                              np.random.uniform(1,1e20), #mass ##the square brackets here were the issue
+                              np.random.uniform(1,1e4), #radius
                              (np.random.randint(0, 255), np.random.randint(0, 255), np.random.randint(0, 255)), #colour
-                             [0, np.random.uniform(-5e4,5e4), 0], #veloctiy
+                             [0, np.random.uniform(-35000,35000), 0], #veloctiy
                              (0,0,0))) #acceleration
     
 positions = { obj.name: [] for obj in objects }
-cpositions = []
+cpositions = { obj.name: [] for obj in objects }
 
 #actual drawing of obejcts on screen
 circle_radius = 10
-update_positons()
-
-#need to have it so it only does from range 3-100
-for obj in objects:
-    if obj.name != "planet" or obj.name != "sat" or obj.name != "moon":
-        cpositions.append(transform_position(obj.position,window_size))
+c1_pos = 0
+c2_pos = 0 
+c3_pos = 0
+c1_pos, c2_pos, c3_pos = update_positons()
     
 #set the starting velocity(ies)
 satellite.velocity[1] = -get_starting_velocity(satellite)
+moon.velocity[1] = -get_starting_velocity(moon)
 
+# for obj in objects:
+#     if obj.name not in ("planet", "sat", "moon"):
+#         obj.velocity[1] = -get_starting_velocity(obj)
+    
 clock = pygame.time.Clock()
 fps = 60
-
 
 orbits = 0
 pos_count = 0
@@ -168,7 +196,18 @@ while running:
     #RK4 intergration()
     rk4_intergration(satellite, planet, dt) #grav influence of planet on the sat
     rk4_intergration(planet,satellite,dt) #grav influence of the sat on the planet
-     
+    rk4_intergration(moon,planet,dt)
+    
+    process_obejcts(objects, dt)
+    # for obj in objects:
+    #     if obj.name not in ("planet", "sat", "moon"):
+    #         rk4_intergration(obj,planet,dt)
+    #        for obj2 in objects:
+    #            if obj2.name not in ("planet", "sat", "moon"):
+    #                if obj.name != obj2.name:
+    #                    rk4_intergration(obj,obj2,dt)
+                    
+    #checks for drawing traces. Only draw every modulus and reset counter every ten thousand
     pos_count +=1
     if pos_count % 10 == 0:
         for obj in objects:
@@ -176,36 +215,13 @@ while running:
         if pos_count > 10000:
             pos_count = 0
     
-    #Check if satellite is in the starting area
-    current_in_start_area = (300e3 < satellite.position[0] < 350e3) and (-50e3 < satellite.position[1] < 50e3)
-    
-    if current_in_start_area:
-        if not in_start_area and has_left_start_area:
-            orbits += 1  #satellite has re-entered the starting area
-            has_left_start_area = False
-        in_start_area = True
-    else:
-        if in_start_area:
-            has_left_start_area = True
-        in_start_area = False
-    
-    #update onscreen numbers
-    satalt = planet.distance_to(satellite) / 1000 #converted to km, taking away the radius so it's alt above the surface.
-    #theta = planet.get_theta_angle(satellite)
-    satellite_velocity = np.linalg.norm(satellite.velocity)
-    
     #Calculate elapsed time
     elapsed_time = datetime.now() - start_time
     elapsed_time_str = str(elapsed_time).split('.')[0]  # Format as HH:MM:SS
     
     #update the position of the drawn obejct on screen##
-    update_positons()
+    c1_pos, c2_pos, c3_pos = update_positons()
     
-    #need to have it so it only does from range 3-100##
-    for obj in objects:
-        if obj.name != "planet" or "sat" or "moon":
-            cpositions.append(transform_position(obj.position,window_size))
-    ## could probably put this into it's own function to reduce copying
     #Draw
     window.fill((0,0,0))
     pygame.draw.circle(window, planet.colour, c1_pos, 30)
@@ -213,8 +229,8 @@ while running:
     pygame.draw.circle(window, moon.colour, c3_pos, 12)
     
     for obj in objects:
-        if obj.name != "planet" or "sat" or "moon":
-            pygame.draw.circle(window, obj.colour, cpositions, 2)
+        if obj.name not in ("planet", "sat", "moon"):
+            pygame.draw.circle(window, obj.colour, cpositions[obj.name], 2)
     
     #Draw orbit trace on screen
     for key, pos_list in positions.items():
@@ -231,6 +247,11 @@ while running:
     #Cap the frame rate to 60 FPS
     clock.tick(fps)
 
+if __name__ == "__main__":
+    cProfile.run('main()', 'profiling_results')
+    p = pstats.Stats('profiling_results')
+    p.sort_stats('cumulative').print_stats(20)
+    
 # Quit Pygame
 pygame.quit()
 sys.exit()

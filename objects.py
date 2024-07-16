@@ -30,9 +30,9 @@ class PointMass:
     def acceleration_due_to_gravity(self,other):
         dVector = other.position - self.position# distance vector from self to the other point mass
         r = np.linalg.norm(dVector) #Compute the Euclidean distance
-
-        unit_vector = (dVector / r) #the unit vector for the direction of the force
-        #acceleration_magnitude = -Constants.mu_earth / r**2
+        if r == 0:
+            raise ValueError("Collision detected or overlapping objects.")
+        unit_vector = dVector / r #the unit vector for the direction of the force
         acceleration_magnitude = -Constants.gravitational_constant * self.mass / r**2 #using the mass instead of Mu so it's more polymorphic.
         return acceleration_magnitude * unit_vector #Return the acceleration vector by multiplying the magnitude with the unit vector
         #the returned acceleration vector is in m/s
